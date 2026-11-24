@@ -82,6 +82,13 @@ local function detect(player)
     return active
 end
 
+local function hasActivity(active)
+    for _ in pairs(active) do
+        return true
+    end
+    return false
+end
+
 local function multiplier(active)
     local config = SandboxVars and SandboxVars.StaminaTuner
     if not config then return 1 end
@@ -119,17 +126,17 @@ local function onPlayerUpdate(player)
         updates = last.updates
         if current < last.endurance then
             -- Attribute delayed animation costs to the preceding activity.
-            local attributed = next(active) and active or last.active
+            local attributed = hasActivity(active) and active or last.active
             local scale = multiplier(attributed)
             correction = correction + (last.endurance - current) * (1 - scale)
         end
 
-        if next(active) or next(last.active) or correction ~= 0 then
+        if hasActivity(active) or hasActivity(last.active) or correction ~= 0 then
             updates = updates + 1
         end
 
         -- Flush a partial batch when tracked activity ends, including short actions.
-        if updates >= BATCH_UPDATES or not next(active) then
+        if updates >= BATCH_UPDATES or not hasActivity(active) then
             if correction ~= 0 then
                 stats:set(CharacterStat.ENDURANCE, math.max(0, math.min(1, current + correction)))
                 current = stats:get(CharacterStat.ENDURANCE)
