@@ -24,8 +24,6 @@
   "Sandbox_SheetRopes_tooltip": "100% = vanilla, 0% = no endurance drain, 50% = half, 200% = double (up to 999%).",
   "Sandbox_Exercising": "Exercising endurance (%)",
   "Sandbox_Exercising_tooltip": "100% = vanilla, 0% = no endurance drain, 50% = half, 200% = double (up to 999%).",
-  "Sandbox_OverloadedWalking": "Walking severely overloaded endurance (%)",
-  "Sandbox_OverloadedWalking_tooltip": "100% = vanilla, 0% = no endurance drain, 50% = half, 200% = double (up to 999%).",
   "Sandbox_DraggingCorpses": "Dragging corpses endurance (%)",
   "Sandbox_DraggingCorpses_tooltip": "100% = vanilla, 0% = no endurance drain, 50% = half, 200% = double (up to 999%).",
   "Sandbox_Digging": "Digging endurance (%)",

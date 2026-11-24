@@ -108,15 +108,6 @@ option StaminaTuner.Exercising {
     translation = Exercising,
 }
 
-option StaminaTuner.OverloadedWalking {
-    type = integer,
-    min = 0,
-    max = 999,
-    default = 100,
-    page = StaminaTuner,
-    translation = OverloadedWalking,
-}
-
 option StaminaTuner.DraggingCorpses {
     type = integer,
     min = 0,

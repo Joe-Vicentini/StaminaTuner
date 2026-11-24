@@ -36,8 +36,6 @@ local function detect(player)
         active.Sprinting = true
     elseif player:IsRunning() then
         active.Jogging = true
-    elseif player:isPlayerMoving() and player:getMoodles():getMoodleLevel(MoodleType.HEAVY_LOAD) >= 3 then
-        active.OverloadedWalking = true
     end
 
     if state == "SwipeStatePlayer" or player:isAttacking() then
