@@ -1,6 +1,7 @@
 -- Stamina Tuner (Build 42). All adjustments happen in one player update handler.
 local StaminaTuner = {}
 local previous = setmetatable({}, { __mode = "k" })
+local BATCH_UPDATES = 15
 
 local function actionName(player)
     -- Lua timed actions expose Type; Java BaseAction instances are not a reliable
@@ -110,20 +111,40 @@ local function onPlayerUpdate(player)
     local current = stats:get(CharacterStat.ENDURANCE)
     local active = detect(player)
     local last = previous[player]
+    local correction = 0
+    local updates = 0
 
-    if last and current < last.endurance then
-        -- Some animation transitions end before their endurance cost is posted.
-        -- On such an update, attribute the drain to the preceding activity.
-        local attributed = next(active) and active or last.active
-        local scale = multiplier(attributed)
-        if scale ~= 1 then
-            local drained = last.endurance - current
-            current = math.max(0, math.min(1, last.endurance - drained * scale))
-            stats:set(CharacterStat.ENDURANCE, current)
+    if last then
+        correction = last.correction
+        updates = last.updates
+        if current < last.endurance then
+            -- Attribute delayed animation costs to the preceding activity.
+            local attributed = next(active) and active or last.active
+            local scale = multiplier(attributed)
+            correction = correction + (last.endurance - current) * (1 - scale)
+        end
+
+        if next(active) or next(last.active) or correction ~= 0 then
+            updates = updates + 1
+        end
+
+        -- Flush a partial batch when tracked activity ends, including short actions.
+        if updates >= BATCH_UPDATES or not next(active) then
+            if correction ~= 0 then
+                stats:set(CharacterStat.ENDURANCE, math.max(0, math.min(1, current + correction)))
+                current = stats:get(CharacterStat.ENDURANCE)
+            end
+            correction = 0
+            updates = 0
         end
     end
 
-    previous[player] = { endurance = current, active = active }
+    previous[player] = {
+        endurance = current,
+        active = active,
+        correction = correction,
+        updates = updates,
+    }
 end
 
 Events.OnPlayerUpdate.Add(onPlayerUpdate)
