@@ -104,6 +104,10 @@ local function climbingBlocked(player, optionName)
         and player:getMoodles():getMoodleLevel(MoodleType.ENDURANCE) >= 4
 end
 
+local function showClimbExhaustion(player)
+    HaloTextHelper.addBadText(player, "I wish I could climb, but I'm too tired")
+end
+
 -- Check queued climbs before their zero-duration action starts the animation.
 require "TimedActions/ISClimbSheetRopeAction"
 require "TimedActions/ISClimbLadderAction"
@@ -113,6 +117,11 @@ local function restrictClimbAction(actionClass, optionName)
     local originalIsValid = actionClass.isValid
     function actionClass:isValid()
         if not self.down and climbingBlocked(self.character, optionName) then
+            -- Report only an otherwise valid attempt, once per timed action.
+            if not self.staminaTunerClimbWarning and originalIsValid(self) then
+                self.staminaTunerClimbWarning = true
+                showClimbExhaustion(self.character)
+            end
             return false
         end
         return originalIsValid(self)
@@ -244,6 +253,19 @@ local function updateClimbContext(player)
         ignoredContext[player] = nil
     end
 end
+
+-- The interaction key bypasses timed actions, so report its blocked attempts
+-- on key release rather than on every player update.
+local function onClimbKeyPressed(key)
+    if not getCore():isKey(KeybindId.INTERACT, key) then return end
+    local player = getPlayer()
+    if player and not player:isDead() and ignoredContext[player]
+        and player:isIgnoreContextKey() then
+        showClimbExhaustion(player)
+    end
+end
+
+Events.OnKeyPressed.Add(onClimbKeyPressed)
 
 local function applyClimbingDrain(stats, current, climbing, recovered, optionName)
     if not climbing or current <= 0.01 then return current end
