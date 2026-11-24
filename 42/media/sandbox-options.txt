@@ -3,7 +3,7 @@ VERSION = 1,
 option StaminaTuner.Sprinting {
     type = integer,
     min = 0,
-    max = 500,
+    max = 999,
     default = 100,
     page = StaminaTuner,
     translation = Sprinting,
@@ -12,7 +12,7 @@ option StaminaTuner.Sprinting {
 option StaminaTuner.Jogging {
     type = integer,
     min = 0,
-    max = 500,
+    max = 999,
     default = 100,
     page = StaminaTuner,
     translation = Jogging,
@@ -21,7 +21,7 @@ option StaminaTuner.Jogging {
 option StaminaTuner.SneakJogging {
     type = integer,
     min = 0,
-    max = 500,
+    max = 999,
     default = 100,
     page = StaminaTuner,
     translation = SneakJogging,
@@ -30,7 +30,7 @@ option StaminaTuner.SneakJogging {
 option StaminaTuner.Melee {
     type = integer,
     min = 0,
-    max = 500,
+    max = 999,
     default = 100,
     page = StaminaTuner,
     translation = Melee,
@@ -39,7 +39,7 @@ option StaminaTuner.Melee {
 option StaminaTuner.Pushing {
     type = integer,
     min = 0,
-    max = 500,
+    max = 999,
     default = 100,
     page = StaminaTuner,
     translation = Pushing,
@@ -48,7 +48,7 @@ option StaminaTuner.Pushing {
 option StaminaTuner.Stomping {
     type = integer,
     min = 0,
-    max = 500,
+    max = 999,
     default = 100,
     page = StaminaTuner,
     translation = Stomping,
@@ -57,7 +57,7 @@ option StaminaTuner.Stomping {
 option StaminaTuner.ChoppingTrees {
     type = integer,
     min = 0,
-    max = 500,
+    max = 999,
     default = 100,
     page = StaminaTuner,
     translation = ChoppingTrees,
@@ -66,7 +66,7 @@ option StaminaTuner.ChoppingTrees {
 option StaminaTuner.Vaulting {
     type = integer,
     min = 0,
-    max = 500,
+    max = 999,
     default = 100,
     page = StaminaTuner,
     translation = Vaulting,
@@ -75,7 +75,7 @@ option StaminaTuner.Vaulting {
 option StaminaTuner.TallFences {
     type = integer,
     min = 0,
-    max = 500,
+    max = 999,
     default = 100,
     page = StaminaTuner,
     translation = TallFences,
@@ -84,7 +84,7 @@ option StaminaTuner.TallFences {
 option StaminaTuner.Ladders {
     type = integer,
     min = 0,
-    max = 500,
+    max = 999,
     default = 100,
     page = StaminaTuner,
     translation = Ladders,
@@ -93,7 +93,7 @@ option StaminaTuner.Ladders {
 option StaminaTuner.SheetRopes {
     type = integer,
     min = 0,
-    max = 500,
+    max = 999,
     default = 100,
     page = StaminaTuner,
     translation = SheetRopes,
@@ -102,7 +102,7 @@ option StaminaTuner.SheetRopes {
 option StaminaTuner.Exercising {
     type = integer,
     min = 0,
-    max = 500,
+    max = 999,
     default = 100,
     page = StaminaTuner,
     translation = Exercising,
@@ -111,7 +111,7 @@ option StaminaTuner.Exercising {
 option StaminaTuner.OverloadedWalking {
     type = integer,
     min = 0,
-    max = 500,
+    max = 999,
     default = 100,
     page = StaminaTuner,
     translation = OverloadedWalking,
@@ -120,7 +120,7 @@ option StaminaTuner.OverloadedWalking {
 option StaminaTuner.DraggingCorpses {
     type = integer,
     min = 0,
-    max = 500,
+    max = 999,
     default = 100,
     page = StaminaTuner,
     translation = DraggingCorpses,
@@ -129,7 +129,7 @@ option StaminaTuner.DraggingCorpses {
 option StaminaTuner.Digging {
     type = integer,
     min = 0,
-    max = 500,
+    max = 999,
     default = 100,
     page = StaminaTuner,
     translation = Digging,
