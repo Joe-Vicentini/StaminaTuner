@@ -90,15 +90,6 @@ option StaminaTuner.TallFences {
     translation = TallFences,
 }
 
-option StaminaTuner.SheetRopes {
-    type = integer,
-    min = 0,
-    max = 999,
-    default = 100,
-    page = StaminaTuner,
-    translation = SheetRopes,
-}
-
 option StaminaTuner.Exercising {
     type = integer,
     min = 0,
@@ -124,6 +115,15 @@ option StaminaTuner.LadderDrain {
     page = StaminaTuner,
     translation = LadderDrain,
     valueTranslation = StaminaTuner_LadderDrain,
+}
+
+option StaminaTuner.SheetRopeDrain {
+    type = enum,
+    numValues = 3,
+    default = 1,
+    page = StaminaTuner,
+    translation = SheetRopeDrain,
+    valueTranslation = StaminaTuner_SheetRopeDrain,
 }
 
 option StaminaTuner.GraveDiggingDrain {

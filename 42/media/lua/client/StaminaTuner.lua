@@ -66,7 +66,7 @@ local function detect(player)
     elseif state == "ClimbState" or state == "ClimbDownState"
         or state == "ClimbSheetRopeState" or state == "ClimbDownSheetRopeState"
         or action == "ISClimbSheetRopeAction" then
-        active.SheetRopes = true
+        -- Sheet rope ascent uses the same synthetic drain as ladders.
     elseif state == "FitnessState" then
         active.Exercising = true
     end
@@ -178,10 +178,15 @@ local function climbingUpLadder(player)
         or (player.isClimbingLadder and player:isClimbingLadder()) or false
 end
 
-local function applyLadderDrain(stats, current, climbing, recovered)
+local function climbingUpSheetRope(player)
+    local state = stateName(player)
+    return state == "ClimbState" or state == "ClimbSheetRopeState"
+end
+
+local function applyClimbingDrain(stats, current, climbing, recovered, optionName)
     if not climbing or current <= 0.01 then return current end
     local options = getSandboxOptions()
-    local preset = options and MOVEMENT_DRAIN[sandboxValue(options, "LadderDrain", 1)]
+    local preset = options and MOVEMENT_DRAIN[sandboxValue(options, optionName, 1)]
     local factor = preset and sandboxValue(options, preset.activity, 100) / 100 or 0
     if factor > 0 then
         local drain = preset.rate * factor * getGameTime():getMultiplier()
@@ -202,6 +207,9 @@ local function onPlayerUpdate(player)
     local last = previous[player]
     local climbing = climbingUpLadder(player)
     local ladderRecovered = last and climbing and last.climbing
+        and math.max(0, current - last.endurance) or 0
+    local climbingRope = not climbing and climbingUpSheetRope(player)
+    local ropeRecovered = last and climbingRope and last.climbingRope
         and math.max(0, current - last.endurance) or 0
     local digging = diggingAction(player)
     local recovered = last and digging and last.digging == digging
@@ -237,12 +245,14 @@ local function onPlayerUpdate(player)
     -- Apply after vanilla corrections and store the resulting endurance so
     -- the next update cannot mistake synthetic drain for vanilla activity loss.
     current = applyDiggingDrain(player, stats, current, digging, recovered)
-    current = applyLadderDrain(stats, current, climbing, ladderRecovered)
+    current = applyClimbingDrain(stats, current, climbing, ladderRecovered, "LadderDrain")
+    current = applyClimbingDrain(stats, current, climbingRope, ropeRecovered, "SheetRopeDrain")
 
     previous[player] = {
         endurance = current,
         digging = digging,
         climbing = climbing,
+        climbingRope = climbingRope,
         active = active,
         correction = correction,
         updates = updates,
