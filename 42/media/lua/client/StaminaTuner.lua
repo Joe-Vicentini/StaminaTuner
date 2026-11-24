@@ -98,6 +98,30 @@ local function sandboxValue(options, name, default)
     return tonumber(option:getValue()) or default
 end
 
+local function climbingBlocked(player, optionName)
+    local options = getSandboxOptions()
+    return options and sandboxValue(options, optionName, 1) ~= 1
+        and player:getMoodles():getMoodleLevel(MoodleType.ENDURANCE) >= 4
+end
+
+-- Check queued climbs before their zero-duration action starts the animation.
+require "TimedActions/ISClimbSheetRopeAction"
+require "TimedActions/ISClimbLadderAction"
+
+local function restrictClimbAction(actionClass, optionName)
+    if not actionClass then return end
+    local originalIsValid = actionClass.isValid
+    function actionClass:isValid()
+        if not self.down and climbingBlocked(self.character, optionName) then
+            return false
+        end
+        return originalIsValid(self)
+    end
+end
+
+restrictClimbAction(ISClimbLadderAction, "LadderDrain")
+restrictClimbAction(ISClimbSheetRopeAction, "SheetRopeDrain")
+
 -- Grave digging uses a generic build action. Scale its vanilla duration once
 -- when it is created, without changing any other construction actions.
 require "BuildingObjects/TimedActions/ISBuildAction"
@@ -183,6 +207,44 @@ local function climbingUpSheetRope(player)
     return state == "ClimbState" or state == "ClimbSheetRopeState"
 end
 
+-- The interaction key can start a climb directly in Java, bypassing the Lua
+-- timed actions. Only suppress it at a climbable base, never in mid-climb.
+local ignoredContext = setmetatable({}, { __mode = "k" })
+
+local function updateClimbContext(player)
+    if not player:isLocalPlayer() then return end
+    local blocked = false
+    if not player:isDead()
+        and player:getMoodles():getMoodleLevel(MoodleType.ENDURANCE) >= 4
+        and not (player.isbClimbing and player:isbClimbing())
+        and not climbingUpLadder(player) and not climbingUpSheetRope(player)
+        and not (player.isClimbingDownLadder and player:isClimbingDownLadder()) then
+        local state = stateName(player)
+        local square = player:getCurrentSquare()
+        if square and state ~= "ClimbDownState" and state ~= "ClimbDownSheetRopeState" then
+            -- Preserve the interaction key when a descent is also possible.
+            local canDescend = player:canClimbDownSheetRope(square)
+                or (player.getClimbLadderDown and player:getClimbLadderDown(square))
+            if not canDescend then
+                if player.getClimbLadder and player:getClimbLadder(square) then
+                    blocked = climbingBlocked(player, "LadderDrain")
+                elseif player:canClimbSheetRope(square) then
+                    blocked = climbingBlocked(player, "SheetRopeDrain")
+                end
+            end
+        end
+    end
+    if blocked then
+        if not player:isIgnoreContextKey() then
+            player:setIgnoreContextKey(true)
+            ignoredContext[player] = true
+        end
+    elseif ignoredContext[player] then
+        player:setIgnoreContextKey(false)
+        ignoredContext[player] = nil
+    end
+end
+
 local function applyClimbingDrain(stats, current, climbing, recovered, optionName)
     if not climbing or current <= 0.01 then return current end
     local options = getSandboxOptions()
@@ -198,7 +260,10 @@ end
 
 local function onPlayerUpdate(player)
     if not player or player:isDead() then
-        if player then previous[player] = nil end
+        if player then
+            previous[player] = nil
+            updateClimbContext(player)
+        end
         return
     end
     local stats = player:getStats()
@@ -247,6 +312,8 @@ local function onPlayerUpdate(player)
     current = applyDiggingDrain(player, stats, current, digging, recovered)
     current = applyClimbingDrain(stats, current, climbing, ladderRecovered, "LadderDrain")
     current = applyClimbingDrain(stats, current, climbingRope, ropeRecovered, "SheetRopeDrain")
+
+    updateClimbContext(player)
 
     previous[player] = {
         endurance = current,
