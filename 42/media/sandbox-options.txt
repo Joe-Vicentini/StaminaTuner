@@ -117,13 +117,13 @@ option StaminaTuner.DraggingCorpses {
     translation = DraggingCorpses,
 }
 
-option StaminaTuner.Digging {
-    type = integer,
-    min = 0,
-    max = 999,
-    default = 100,
+option StaminaTuner.GraveDiggingDrain {
+    type = enum,
+    numValues = 3,
+    default = 1,
     page = StaminaTuner,
-    translation = Digging,
+    translation = GraveDiggingDrain,
+    valueTranslation = StaminaTuner_GraveDiggingDrain,
 }
 
 option StaminaTuner.GraveDiggingDuration {

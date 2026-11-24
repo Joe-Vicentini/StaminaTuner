@@ -2,6 +2,12 @@
 local StaminaTuner = {}
 local previous = setmetatable({}, { __mode = "k" })
 local BATCH_UPDATES = 15
+local GRAVE_EXHAUSTION_THRESHOLD = 0.10
+-- Build 42 movement base coefficients (before character-specific modifiers).
+local GRAVE_DRAIN = {
+    [2] = { activity = "Jogging", rate = 0.000052 },
+    [3] = { activity = "Sprinting", rate = 0.000455 },
+}
 
 local function actionName(player)
     -- Lua timed actions expose Type; Java BaseAction instances are not a reliable
@@ -24,7 +30,7 @@ end
 local function detect(player)
     local active = {}
     local state = stateName(player)
-    local action, timedAction = actionName(player)
+    local action = actionName(player)
     local performing = variable(player, "PerformingAction")
     local attack = variable(player, "AttackType")
 
@@ -71,12 +77,6 @@ local function detect(player)
     end
     if action == "ISFitnessAction" or action == "ISFitnessUI" then
         active.Exercising = true
-    end
-    if action:find("Dig", 1, true) or action:find("Shovel", 1, true)
-        or (action == "ISBuildAction" and timedAction and timedAction.item
-            and timedAction.item.Type == "ISEmptyGraves")
-        or performing:find("dig", 1, true) or performing:find("shovel", 1, true) then
-        active.Digging = true
     end
     if player:isDraggingCorpse() or state == "PlayerDraggingCorpse" then
         active.DraggingCorpses = true
@@ -138,6 +138,36 @@ local function multiplier(active)
     return result or 1
 end
 
+-- Only charge a grave build that has actually started, not walking to it
+-- or any other action using a shovel.
+local function graveAction(player)
+    local name, action = actionName(player)
+    if name == "ISBuildAction" and action.item
+        and action.item.Type == "ISEmptyGraves" and action.started
+        and action:isStarted() then
+        return action
+    end
+end
+
+local function applyGraveDrain(player, stats, current, grave, recovered)
+    if not grave then return current end
+    local options = getSandboxOptions()
+    local preset = options and GRAVE_DRAIN[sandboxValue(options, "GraveDiggingDrain", 1)]
+    local factor = preset and sandboxValue(options, preset.activity, 100) / 100 or 0
+    if current > GRAVE_EXHAUSTION_THRESHOLD and factor > 0 then
+        -- Prevent stationary endurance recovery from cancelling the artificial
+        -- movement drain. Use the game-time delta, including fast-forward.
+        local drain = preset.rate * factor * getGameTime():getMultiplier()
+        current = math.max(0, current - recovered - drain)
+        stats:set(CharacterStat.ENDURANCE, current)
+    end
+    -- Check the stat directly so cancellation does not wait for the moodle update.
+    if current <= GRAVE_EXHAUSTION_THRESHOLD then
+        grave:forceStop()
+    end
+    return stats:get(CharacterStat.ENDURANCE)
+end
+
 local function onPlayerUpdate(player)
     if not player or player:isDead() then
         if player then previous[player] = nil end
@@ -147,6 +177,9 @@ local function onPlayerUpdate(player)
     local current = stats:get(CharacterStat.ENDURANCE)
     local active = detect(player)
     local last = previous[player]
+    local grave = graveAction(player)
+    local recovered = last and grave and last.grave == grave
+        and math.max(0, current - last.endurance) or 0
     local correction = 0
     local updates = 0
 
@@ -175,8 +208,13 @@ local function onPlayerUpdate(player)
         end
     end
 
+    -- Apply after vanilla corrections and store the resulting endurance so
+    -- the next update cannot mistake synthetic drain for vanilla activity loss.
+    current = applyGraveDrain(player, stats, current, grave, recovered)
+
     previous[player] = {
         endurance = current,
+        grave = grave,
         active = active,
         correction = correction,
         updates = updates,
