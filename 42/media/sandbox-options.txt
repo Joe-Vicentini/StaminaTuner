@@ -81,13 +81,13 @@ option StaminaTuner.TallFences {
     translation = TallFences,
 }
 
-option StaminaTuner.Ladders {
-    type = integer,
-    min = 0,
-    max = 999,
-    default = 100,
+option StaminaTuner.LadderDrain {
+    type = enum,
+    numValues = 3,
+    default = 1,
     page = StaminaTuner,
-    translation = Ladders,
+    translation = LadderDrain,
+    valueTranslation = StaminaTuner_LadderDrain,
 }
 
 option StaminaTuner.SheetRopes {

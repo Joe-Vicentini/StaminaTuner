@@ -4,7 +4,7 @@ local previous = setmetatable({}, { __mode = "k" })
 local BATCH_UPDATES = 15
 local DIGGING_EXHAUSTION_THRESHOLD = 0.10
 -- Build 42 movement base coefficients (before character-specific modifiers).
-local DIGGING_DRAIN = {
+local MOVEMENT_DRAIN = {
     [2] = { activity = "Jogging", rate = 0.000052 },
     [3] = { activity = "Sprinting", rate = 0.000455 },
 }
@@ -58,11 +58,11 @@ local function detect(player)
         active.Vaulting = true
     elseif state == "ClimbOverWallState" then
         active.TallFences = true
-    elseif action == "ISClimbLadderAction"
+    elseif state == "ClimbLadderState" or state == "ClimbDownLadderState"
         or (player.isClimbingLadder and player:isClimbingLadder())
         or (player.isClimbingDownLadder and player:isClimbingDownLadder())
-        or state == "ClimbLadderState" or state == "ClimbDownLadderState" then
-        active.Ladders = true
+        or action == "ISClimbLadderAction" then
+        -- Ladder ascent has its own synthetic drain, not an overlap multiplier.
     elseif state == "ClimbState" or state == "ClimbDownState"
         or state == "ClimbSheetRopeState" or state == "ClimbDownSheetRopeState"
         or action == "ISClimbSheetRopeAction" then
@@ -152,7 +152,7 @@ end
 local function applyDiggingDrain(player, stats, current, digging, recovered)
     if not digging then return current end
     local options = getSandboxOptions()
-    local preset = options and DIGGING_DRAIN[sandboxValue(options, "GraveDiggingDrain", 1)]
+    local preset = options and MOVEMENT_DRAIN[sandboxValue(options, "GraveDiggingDrain", 1)]
     local factor = preset and sandboxValue(options, preset.activity, 100) / 100 or 0
     if current > DIGGING_EXHAUSTION_THRESHOLD and factor > 0 then
         -- Prevent stationary endurance recovery from cancelling the artificial
@@ -168,6 +168,29 @@ local function applyDiggingDrain(player, stats, current, digging, recovered)
     return stats:get(CharacterStat.ENDURANCE)
 end
 
+local function climbingUpLadder(player)
+    local state = stateName(player)
+    if state == "ClimbDownLadderState"
+        or (player.isClimbingDownLadder and player:isClimbingDownLadder()) then
+        return false
+    end
+    return state == "ClimbLadderState"
+        or (player.isClimbingLadder and player:isClimbingLadder()) or false
+end
+
+local function applyLadderDrain(stats, current, climbing, recovered)
+    if not climbing or current <= 0.01 then return current end
+    local options = getSandboxOptions()
+    local preset = options and MOVEMENT_DRAIN[sandboxValue(options, "LadderDrain", 1)]
+    local factor = preset and sandboxValue(options, preset.activity, 100) / 100 or 0
+    if factor > 0 then
+        local drain = preset.rate * factor * getGameTime():getMultiplier()
+        current = math.max(0.01, current - recovered - drain)
+        stats:set(CharacterStat.ENDURANCE, current)
+    end
+    return stats:get(CharacterStat.ENDURANCE)
+end
+
 local function onPlayerUpdate(player)
     if not player or player:isDead() then
         if player then previous[player] = nil end
@@ -177,6 +200,9 @@ local function onPlayerUpdate(player)
     local current = stats:get(CharacterStat.ENDURANCE)
     local active = detect(player)
     local last = previous[player]
+    local climbing = climbingUpLadder(player)
+    local ladderRecovered = last and climbing and last.climbing
+        and math.max(0, current - last.endurance) or 0
     local digging = diggingAction(player)
     local recovered = last and digging and last.digging == digging
         and math.max(0, current - last.endurance) or 0
@@ -211,10 +237,12 @@ local function onPlayerUpdate(player)
     -- Apply after vanilla corrections and store the resulting endurance so
     -- the next update cannot mistake synthetic drain for vanilla activity loss.
     current = applyDiggingDrain(player, stats, current, digging, recovered)
+    current = applyLadderDrain(stats, current, climbing, ladderRecovered)
 
     previous[player] = {
         endurance = current,
         digging = digging,
+        climbing = climbing,
         active = active,
         correction = correction,
         updates = updates,
