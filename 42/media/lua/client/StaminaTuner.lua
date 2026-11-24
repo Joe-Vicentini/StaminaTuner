@@ -13,7 +13,7 @@ end
 
 local function stateName(player)
     local state = player:getCurrentState()
-    return state and tostring(state:getClass():getSimpleName()) or ""
+    return state and getClassSimpleName(state) or ""
 end
 
 local function variable(player, key)
