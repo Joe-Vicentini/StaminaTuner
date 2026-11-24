@@ -89,13 +89,20 @@ local function hasActivity(active)
     return false
 end
 
+local function sandboxValue(options, name, default)
+    local option = options:getOptionByName("StaminaTuner." .. name)
+    if not option then return default end
+    return tonumber(option:getValue()) or default
+end
+
 local function multiplier(active)
-    local config = SandboxVars and SandboxVars.StaminaTuner
-    if not config then return 1 end
-    local mode = tonumber(config.OverlapMode) or 2
+    -- Read the live Java options rather than the SandboxVars Lua snapshot.
+    local options = getSandboxOptions()
+    if not options then return 1 end
+    local mode = sandboxValue(options, "OverlapMode", 2)
     local result = nil
     for name in pairs(active) do
-        local factor = (tonumber(config[name]) or 100) / 100
+        local factor = sandboxValue(options, name, 100) / 100
         if result == nil then
             result = factor
         elseif mode == 1 then
