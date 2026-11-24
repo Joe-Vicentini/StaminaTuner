@@ -100,6 +100,25 @@ local function sandboxValue(options, name, default)
     return tonumber(option:getValue()) or default
 end
 
+-- Grave digging uses a generic build action. Scale its vanilla duration once
+-- when it is created, without changing any other construction actions.
+require "BuildingObjects/TimedActions/ISBuildAction"
+
+local originalBuildActionNew = ISBuildAction.new
+function ISBuildAction:new(character, item, ...)
+    local action = originalBuildActionNew(self, character, item, ...)
+    -- Multiplayer construction duration is set by the server.
+    if not isClient() and item and item.Type == "ISEmptyGraves"
+        and action.maxTime > 1 and not character:isTimedActionInstant() then
+        local options = getSandboxOptions()
+        local percent = options and sandboxValue(options, "GraveDiggingDuration", 100) or 100
+        if percent ~= 100 then
+            action.maxTime = math.max(1, math.floor(action.maxTime * percent / 100 + 0.5))
+        end
+    end
+    return action
+end
+
 local function multiplier(active)
     -- Read the live Java options rather than the SandboxVars Lua snapshot.
     local options = getSandboxOptions()

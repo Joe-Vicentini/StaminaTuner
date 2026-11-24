@@ -30,6 +30,8 @@
   "Sandbox_DraggingCorpses_tooltip": "100% = vanilla, 0% = no endurance drain, 50% = half, 200% = double (up to 999%).",
   "Sandbox_Digging": "Digging endurance (%)",
   "Sandbox_Digging_tooltip": "100% = vanilla, 0% = no endurance drain, 50% = half, 200% = double (up to 999%).",
+  "Sandbox_GraveDiggingDuration": "Grave digging duration (%)",
+  "Sandbox_GraveDiggingDuration_tooltip": "Single-player only. 100% = vanilla duration, 200% = twice as long, 999% = almost ten times as long. Applies to new grave digging actions independently of endurance multipliers.",
   "Sandbox_OverlapMode": "Simultaneous activities",
   "Sandbox_OverlapMode_tooltip": "How to combine multipliers when more than one tracked activity is active.",
   "Sandbox_StaminaTuner_OverlapMode_option1": "Compound",

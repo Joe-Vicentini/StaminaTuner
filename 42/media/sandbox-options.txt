@@ -135,6 +135,15 @@ option StaminaTuner.Digging {
     translation = Digging,
 }
 
+option StaminaTuner.GraveDiggingDuration {
+    type = integer,
+    min = 1,
+    max = 999,
+    default = 100,
+    page = StaminaTuner,
+    translation = GraveDiggingDuration,
+}
+
 option StaminaTuner.OverlapMode {
     type = enum,
     numValues = 3,
