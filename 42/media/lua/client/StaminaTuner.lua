@@ -9,7 +9,7 @@ local function actionName(player)
     if not ISTimedActionQueue then return "" end
     local queue = ISTimedActionQueue.getTimedActionQueue(player)
     local action = queue and queue.current
-    return action and tostring(action.Type or "") or ""
+    return action and tostring(action.Type or "") or "", action
 end
 
 local function stateName(player)
@@ -24,7 +24,7 @@ end
 local function detect(player)
     local active = {}
     local state = stateName(player)
-    local action = actionName(player)
+    local action, timedAction = actionName(player)
     local performing = variable(player, "PerformingAction")
     local attack = variable(player, "AttackType")
 
@@ -54,10 +54,15 @@ local function detect(player)
         active.Vaulting = true
     elseif state == "ClimbOverWallState" then
         active.TallFences = true
-    elseif state == "ClimbSheetRopeState" or state == "ClimbDownSheetRopeState" then
-        active.SheetRopes = true
-    elseif state == "ClimbLadderState" or state == "ClimbDownLadderState" then
+    elseif action == "ISClimbLadderAction"
+        or (player.isClimbingLadder and player:isClimbingLadder())
+        or (player.isClimbingDownLadder and player:isClimbingDownLadder())
+        or state == "ClimbLadderState" or state == "ClimbDownLadderState" then
         active.Ladders = true
+    elseif state == "ClimbState" or state == "ClimbDownState"
+        or state == "ClimbSheetRopeState" or state == "ClimbDownSheetRopeState"
+        or action == "ISClimbSheetRopeAction" then
+        active.SheetRopes = true
     elseif state == "FitnessState" then
         active.Exercising = true
     end
@@ -70,6 +75,8 @@ local function detect(player)
         active.Exercising = true
     end
     if action:find("Dig", 1, true) or action:find("Shovel", 1, true)
+        or (action == "ISBuildAction" and timedAction and timedAction.item
+            and timedAction.item.Type == "ISEmptyGraves")
         or performing:find("dig", 1, true) or performing:find("shovel", 1, true) then
         active.Digging = true
     end
