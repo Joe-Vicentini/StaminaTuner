@@ -74,8 +74,7 @@ local function detect(player)
         or performing:find("dig", 1, true) or performing:find("shovel", 1, true) then
         active.Digging = true
     end
-    if action:find("DragCorpse", 1, true) or action:find("MoveCorpse", 1, true)
-        or variable(player, "DraggingCorpse") == "true" then
+    if player:isDraggingCorpse() or state == "PlayerDraggingCorpse" then
         active.DraggingCorpses = true
     end
 
