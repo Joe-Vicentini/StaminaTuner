@@ -2,9 +2,9 @@
 local StaminaTuner = {}
 local previous = setmetatable({}, { __mode = "k" })
 local BATCH_UPDATES = 15
-local GRAVE_EXHAUSTION_THRESHOLD = 0.10
+local DIGGING_EXHAUSTION_THRESHOLD = 0.10
 -- Build 42 movement base coefficients (before character-specific modifiers).
-local GRAVE_DRAIN = {
+local DIGGING_DRAIN = {
     [2] = { activity = "Jogging", rate = 0.000052 },
     [3] = { activity = "Sprinting", rate = 0.000455 },
 }
@@ -138,23 +138,23 @@ local function multiplier(active)
     return result or 1
 end
 
--- Only charge a grave build that has actually started, not walking to it
--- or any other action using a shovel.
-local function graveAction(player)
+-- Only charge the three supported digging actions once they have started,
+-- not walking to them or unrelated actions using a shovel.
+local function diggingAction(player)
     local name, action = actionName(player)
-    if name == "ISBuildAction" and action.item
-        and action.item.Type == "ISEmptyGraves" and action.started
-        and action:isStarted() then
-        return action
+    if (name == "ISBuildAction" and action.item
+            and action.item.Type == "ISEmptyGraves" and action.started)
+        or name == "ISFillGrave" or name == "ISShovelGround" then
+        if action:isStarted() then return action end
     end
 end
 
-local function applyGraveDrain(player, stats, current, grave, recovered)
-    if not grave then return current end
+local function applyDiggingDrain(player, stats, current, digging, recovered)
+    if not digging then return current end
     local options = getSandboxOptions()
-    local preset = options and GRAVE_DRAIN[sandboxValue(options, "GraveDiggingDrain", 1)]
+    local preset = options and DIGGING_DRAIN[sandboxValue(options, "GraveDiggingDrain", 1)]
     local factor = preset and sandboxValue(options, preset.activity, 100) / 100 or 0
-    if current > GRAVE_EXHAUSTION_THRESHOLD and factor > 0 then
+    if current > DIGGING_EXHAUSTION_THRESHOLD and factor > 0 then
         -- Prevent stationary endurance recovery from cancelling the artificial
         -- movement drain. Use the game-time delta, including fast-forward.
         local drain = preset.rate * factor * getGameTime():getMultiplier()
@@ -162,8 +162,8 @@ local function applyGraveDrain(player, stats, current, grave, recovered)
         stats:set(CharacterStat.ENDURANCE, current)
     end
     -- Check the stat directly so cancellation does not wait for the moodle update.
-    if current <= GRAVE_EXHAUSTION_THRESHOLD then
-        grave:forceStop()
+    if current <= DIGGING_EXHAUSTION_THRESHOLD then
+        digging:forceStop()
     end
     return stats:get(CharacterStat.ENDURANCE)
 end
@@ -177,8 +177,8 @@ local function onPlayerUpdate(player)
     local current = stats:get(CharacterStat.ENDURANCE)
     local active = detect(player)
     local last = previous[player]
-    local grave = graveAction(player)
-    local recovered = last and grave and last.grave == grave
+    local digging = diggingAction(player)
+    local recovered = last and digging and last.digging == digging
         and math.max(0, current - last.endurance) or 0
     local correction = 0
     local updates = 0
@@ -210,11 +210,11 @@ local function onPlayerUpdate(player)
 
     -- Apply after vanilla corrections and store the resulting endurance so
     -- the next update cannot mistake synthetic drain for vanilla activity loss.
-    current = applyGraveDrain(player, stats, current, grave, recovered)
+    current = applyDiggingDrain(player, stats, current, digging, recovered)
 
     previous[player] = {
         endurance = current,
-        grave = grave,
+        digging = digging,
         active = active,
         correction = correction,
         updates = updates,

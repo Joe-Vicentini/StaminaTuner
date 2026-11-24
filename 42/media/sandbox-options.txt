@@ -135,6 +135,24 @@ option StaminaTuner.GraveDiggingDuration {
     translation = GraveDiggingDuration,
 }
 
+option StaminaTuner.GraveFillingDuration {
+    type = integer,
+    min = 1,
+    max = 999,
+    default = 100,
+    page = StaminaTuner,
+    translation = GraveFillingDuration,
+}
+
+option StaminaTuner.GroundCollectionDuration {
+    type = integer,
+    min = 1,
+    max = 999,
+    default = 100,
+    page = StaminaTuner,
+    translation = GroundCollectionDuration,
+}
+
 option StaminaTuner.OverlapMode {
     type = enum,
     numValues = 3,
