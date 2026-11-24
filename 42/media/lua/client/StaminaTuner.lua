@@ -36,8 +36,7 @@ local function detect(player)
         active.Sprinting = true
     elseif player:IsRunning() then
         active.Jogging = true
-    end
-    if player:isMoving() and player:getInventoryWeight() >= player:getMaxWeight() * 1.5 then
+    elseif player:isPlayerMoving() and player:getMoodles():getMoodleLevel(MoodleType.HEAVY_LOAD) >= 3 then
         active.OverloadedWalking = true
     end
 
