@@ -1,5 +1,14 @@
 VERSION = 1,
 
+option StaminaTuner.OverlapMode {
+    type = enum,
+    numValues = 3,
+    default = 2,
+    page = StaminaTuner,
+    translation = OverlapMode,
+    valueTranslation = StaminaTuner_OverlapMode,
+}
+
 option StaminaTuner.Sprinting {
     type = integer,
     min = 0,
@@ -81,15 +90,6 @@ option StaminaTuner.TallFences {
     translation = TallFences,
 }
 
-option StaminaTuner.LadderDrain {
-    type = enum,
-    numValues = 3,
-    default = 1,
-    page = StaminaTuner,
-    translation = LadderDrain,
-    valueTranslation = StaminaTuner_LadderDrain,
-}
-
 option StaminaTuner.SheetRopes {
     type = integer,
     min = 0,
@@ -115,6 +115,15 @@ option StaminaTuner.DraggingCorpses {
     default = 100,
     page = StaminaTuner,
     translation = DraggingCorpses,
+}
+
+option StaminaTuner.LadderDrain {
+    type = enum,
+    numValues = 3,
+    default = 1,
+    page = StaminaTuner,
+    translation = LadderDrain,
+    valueTranslation = StaminaTuner_LadderDrain,
 }
 
 option StaminaTuner.GraveDiggingDrain {
@@ -151,13 +160,4 @@ option StaminaTuner.GroundCollectionDuration {
     default = 100,
     page = StaminaTuner,
     translation = GroundCollectionDuration,
-}
-
-option StaminaTuner.OverlapMode {
-    type = enum,
-    numValues = 3,
-    default = 2,
-    page = StaminaTuner,
-    translation = OverlapMode,
-    valueTranslation = StaminaTuner_OverlapMode,
 }
