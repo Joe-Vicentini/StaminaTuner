@@ -27,18 +27,17 @@ local function detect(player)
     local performing = variable(player, "PerformingAction")
     local attack = variable(player, "AttackType")
 
-    -- The movement flags reflect the actual character movement, not keypresses.
-    if player:isMoving() then
-        if player:isSneaking() and (player:IsRunning() or player:isSprinting()) then
-            active.SneakJogging = true
-        elseif player:isSprinting() then
-            active.Sprinting = true
-        elseif player:IsRunning() then
-            active.Jogging = true
-        end
-        if player:getInventoryWeight() >= player:getMaxWeight() * 1.5 then
-            active.OverloadedWalking = true
-        end
+    -- Running flags already describe the player's movement. isMoving() can
+    -- lag behind them during animation transitions, so don't gate jogging on it.
+    if player:isSneaking() and (player:IsRunning() or player:isSprinting()) then
+        active.SneakJogging = true
+    elseif player:isSprinting() then
+        active.Sprinting = true
+    elseif player:IsRunning() then
+        active.Jogging = true
+    end
+    if player:isMoving() and player:getInventoryWeight() >= player:getMaxWeight() * 1.5 then
+        active.OverloadedWalking = true
     end
 
     if state == "SwipeStatePlayer" or player:isAttacking() then
